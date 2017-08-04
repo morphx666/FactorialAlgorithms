@@ -120,6 +120,8 @@ Module ModuleMain
                 result = algorithm(value)
             Catch ex As StackOverflowException
                 result = Double.NaN
+            Catch ex As OverflowException
+                result = Double.NaN
             End Try
             sw.Stop()
         End SyncLock
@@ -213,28 +215,31 @@ Module ModuleMain
     Public Function FactSplit(value As Double) As Double
         value = Math.Truncate(value)
 
-        Dim result As Double = 1
+        Dim curVal As Double = 1
         Dim h As Integer = 0
         Dim shift As Integer = 0
         Dim high As Integer = 1
-        Dim log2n = Math.Floor(SpecialFunctions.Log(value, 2))
+        Dim log2n As Integer = Math.Floor(SpecialFunctions.Log(value, 2))
         Dim len As Integer
 
-        Dim p As Integer = 1
-        Dim r As Integer = 1
+        Dim p As Double = 1
+        Dim r As Double = 1
 
-        Dim Product As Func(Of Integer, Integer) = Function(n As Integer) As Integer
-                                                       Dim m As Integer = n / 2
-                                                       If m = 0 Then
-                                                           result += 2
-                                                           Return result
-                                                       End If
-                                                       If n = 2 Then
-                                                           result = (result + 2) * (result + 4) ' (currentN += 2) * (currentN += 2)
-                                                           Return result
-                                                       End If
-                                                       Return Product(n - m) * Product(m)
-                                                   End Function
+        Dim Product As Func(Of Double, Double) = Function(n As Double) As Double
+                                                     Dim m As Integer = n \ 2
+                                                     If m = 0 Then
+                                                         curVal += 2
+                                                         Return curVal
+                                                     End If
+                                                     If n = 2 Then
+                                                         ' Wish VB.NET supported this:
+                                                         '    return (currentN += 2) * (currentN += 2)
+                                                         Dim tmp As Double = (curVal + 2) * (curVal + 4)
+                                                         curVal += 4
+                                                       Return tmp
+                                                   End If
+                                                   Return Product(n - m) * Product(m)
+                                               End Function
 
         While h <> value
             shift += h
@@ -242,7 +247,7 @@ Module ModuleMain
             log2n -= 1
             len = high
             high = (h - 1) Or 1
-            len = (high - len) / 2
+            len = (high - len) \ 2
 
             If len > 0 Then
                 p *= Product(len)
