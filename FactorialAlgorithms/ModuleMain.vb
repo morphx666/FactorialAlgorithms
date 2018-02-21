@@ -38,14 +38,15 @@ Module ModuleMain
                 Console.CursorVisible = True
 
                 Dim eleapsedTime As New List(Of TimeSpan)
+                Dim iterations As Integer = 10
 
                 suspendThread = True
 
-                eleapsedTime.Add(RunAlgorithm("Recursive", value, AddressOf FactRecursive))
-                eleapsedTime.Add(RunAlgorithm("While", value, AddressOf FactWhile))
-                eleapsedTime.Add(RunAlgorithm("For", value, AddressOf FactFor))
-                eleapsedTime.Add(RunAlgorithm("Split", value, AddressOf FactSplit))
-                eleapsedTime.Add(RunAlgorithm("Gamma", value, AddressOf SpecialFunctions.Fac))
+                eleapsedTime.Add(RunAlgorithm("Recursive", value, AddressOf FactRecursive, iterations))
+                eleapsedTime.Add(RunAlgorithm("While", value, AddressOf FactWhile, iterations))
+                eleapsedTime.Add(RunAlgorithm("For", value, AddressOf FactFor, iterations))
+                eleapsedTime.Add(RunAlgorithm("Split", value, AddressOf FactSplit, iterations))
+                eleapsedTime.Add(RunAlgorithm("Gamma", value, AddressOf SpecialFunctions.Fac, iterations))
 
                 suspendThread = False
 
@@ -110,21 +111,26 @@ Module ModuleMain
         End SyncLock
     End Sub
 
-    Private Function RunAlgorithm(title As String, value As Double, algorithm As FactorialAlgorithm) As TimeSpan
+    Private Function RunAlgorithm(title As String, value As Double, algorithm As FactorialAlgorithm, iterations As Integer) As TimeSpan
         Dim sw As Stopwatch = New Stopwatch()
         Dim result As Double
+        Dim eleapsedTime As TimeSpan
 
-        SyncLock lckObj
-            sw.Start()
-            Try
-                result = algorithm(value)
-            Catch ex As StackOverflowException
-                result = Double.NaN
-            Catch ex As OverflowException
-                result = Double.NaN
-            End Try
-            sw.Stop()
-        End SyncLock
+        For i As Integer = 1 To iterations
+            SyncLock lckObj
+                sw.Start()
+                Try
+                    result = algorithm(value)
+                Catch ex As StackOverflowException
+                    result = Double.NaN
+                Catch ex As OverflowException
+                    result = Double.NaN
+                End Try
+                sw.Stop()
+            End SyncLock
+            eleapsedTime += sw.Elapsed
+        Next
+        eleapsedTime = TimeSpan.FromTicks(eleapsedTime.Ticks / iterations)
 
         Console.ForegroundColor = ConsoleColor.Cyan
         Console.WriteLine(title + ":")
@@ -137,7 +143,7 @@ Module ModuleMain
         Console.WriteLine()
         Console.WriteLine()
 
-        Return sw.Elapsed
+        Return eleapsedTime
     End Function
 
     Private Sub FactorialCursor()

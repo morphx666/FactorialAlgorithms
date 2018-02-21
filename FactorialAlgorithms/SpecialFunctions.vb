@@ -44,7 +44,6 @@
 '	 * @version $Revision: 1.8 $, $Date: 2005/09/12 09:52:34 $
 '	 
 
-
 Public Class SpecialFunctions
     ' Machine constants
 
